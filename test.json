@@ -1,0 +1,15 @@
+{
+    "workspace": "BHIS",
+    "domains": ["blackhillsinfosec.com"],
+    "keys": { 
+        
+    },
+    "modules": [
+        "recon/domains-hosts/bing_domain_api",
+        "recon/domains-hosts/brute_hosts"
+    ],
+    "reporting": [
+        "reporting/csv",
+        "reporting/html"
+    ]
+}

@@ -68,7 +68,7 @@ class recon_sk():
     def run_module(self, name):
         mod = self.framework._do_modules_load(name)
         print("[+] Now running: "+name)
-        input("Paused")
+        # input("Paused")
         # if no module found return 
         if not mod: return
         mod.do_run(None)

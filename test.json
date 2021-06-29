@@ -1,12 +1,14 @@
 {
     "workspace": "BHIS",
     "domains": ["blackhillsinfosec.com"],
+    "creator": "Devin",
     "keys": { 
         
     },
     "modules": [
         "recon/domains-hosts/bing_domain_api",
-        "recon/domains-hosts/brute_hosts"
+        "recon/domains-hosts/brute_hosts",
+        "recon/domains-hosts/spyse_subdomains"
     ],
     "reporting": [
         "reporting/csv",

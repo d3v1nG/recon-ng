@@ -28,9 +28,7 @@ class recon_sk():
 
     # util to show workspace dash
     def show_dashboard(self):
-        cmd = "dashboard"
-        print(cmd)
-        self.framework.onecmd(cmd)
+        self.framework.onecmd("dashboard")
 
     # gets everything needed from config in memory
     def get_config(self, filepath):
@@ -69,6 +67,8 @@ class recon_sk():
     # actual module execution
     def run_module(self, name):
         mod = self.framework._do_modules_load(name)
+        print("[+] Now running: "+name)
+        input("Paused")
         # if no module found return 
         if not mod: return
         mod.do_run(None)
@@ -80,6 +80,7 @@ class recon_sk():
             else:
                 return False
 
+    # need a better solution for reporting section
     def run_report_modules(self):
         print("[~] Reporting")
         # for r in self.reporting:
@@ -116,3 +117,8 @@ if __name__ == "__main__":
         session.run_all_modules()
     session.show_dashboard()
     session.run_report_modules()
+
+    # notes:
+    # recon/hosts-hosts/resolve -> source contains no input
+    # recon/domains-hosts/findsubdomains -> module just doesnt exist anymore lol
+    # recon/domains-vulnerabilities/xssposed ->  doesnt exists

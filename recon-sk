@@ -25,10 +25,18 @@ class recon_sk():
         options = [base.Mode.CLI]
         options.append(self.workspace)
         self.framework.start(*options)
+        self.marketplace_install_modules()
 
     # util to show workspace dash
     def show_dashboard(self):
         self.framework.onecmd("dashboard")
+
+    # install required modules
+    def marketplace_install_modules(self):
+        for mod in self.modules:
+            self.framework.onecmd("marketplace install {0}".format(mod))
+        print("[+] Installed required modules.")
+
 
     # gets everything needed from config in memory
     def get_config(self, filepath):

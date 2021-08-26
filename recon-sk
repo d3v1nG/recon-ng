@@ -11,12 +11,16 @@ import json
 # recon-ng / recon-cli wrapper class
 class recon_sk():
     
-    def __init__(self, filepath):
+    def __init__(self, filepath, domains):
         # get information from config into memory
         self.iterations = 1
         self.config = self.get_config(file)
         self.workspace = self.config['workspace']
-        self.domains = self.config['domains']
+        if domains == "":
+            self.domains = self.config['domains']
+        else:
+            self.domains = self.get_domains(domains)
+
         self.keys = self.config['keys']
         self.modules = self.config['modules']
         self.reporting = self.config['reporting']
@@ -25,6 +29,7 @@ class recon_sk():
         options = [base.Mode.CLI]
         options.append(self.workspace)
         self.framework.start(*options)
+        # set a flag so it doesnt install everytime 
         self.marketplace_install_modules()
 
     # util to show workspace dash
@@ -44,6 +49,12 @@ class recon_sk():
         config = json.load(file)
         file.close() 
         return config
+
+    def get_domains(self, domains_file):
+        file = open(domain_file, 'r')
+        lines = file.readlines()
+        domains = [line.rstrip() for line in lines]
+        return domains
 
     # add api keys to workspace
     def add_api_keys(self):
@@ -109,16 +120,20 @@ if __name__ == "__main__":
     arg = sys.argv
     file = arg[1]
 
-    if len(arg) > 3:
+    if len(arg) > 4:
         help()
         exit()
 
     max_runs = 1
     if len(arg) == 3:
         max_runs = int(arg[2])
+    
+    domain_file = ""
+    if len(arg) == 4:
+        domain_file = str(arg[3])
 
-    #  run recon
-    session = recon_sk(file)
+    # run recon
+    session = recon_sk(file, domain_file)
     session.add_api_keys()
     session.add_options()
     for i in range(max_runs):

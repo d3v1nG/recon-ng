@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
+
+from recon.core import framework
+from recon.core.framework import FrameworkException
 # prevent creation of compiled bytecode files
 sys.dont_write_bytecode = True
 from recon.core import base
@@ -11,16 +14,12 @@ import json
 # recon-ng / recon-cli wrapper class
 class recon_sk():
     
-    def __init__(self, filepath, domains):
+    def __init__(self, filepath):
         # get information from config into memory
         self.iterations = 1
-        self.config = self.get_config(file)
+        self.config = self.get_config(filepath)
         self.workspace = self.config['workspace']
-        if domains == "":
-            self.domains = self.config['domains']
-        else:
-            self.domains = self.get_domains(domains)
-
+        self.domains = self.config['domains']
         self.keys = self.config['keys']
         self.modules = self.config['modules']
         self.reporting = self.config['reporting']
@@ -29,8 +28,8 @@ class recon_sk():
         options = [base.Mode.CLI]
         options.append(self.workspace)
         self.framework.start(*options)
-        # set a flag so it doesnt install everytime 
-        self.marketplace_install_modules()
+        # # set a flag so it doesnt install everytime 
+        # self.marketplace_install_modules()
 
     # util to show workspace dash
     def show_dashboard(self):
@@ -45,13 +44,17 @@ class recon_sk():
 
     # gets everything needed from config in memory
     def get_config(self, filepath):
-        file = open(filepath, 'r')
-        config = json.load(file)
-        file.close() 
-        return config
+        try:
+            file = open(filepath, 'r')
+            config = json.load(file)
+            file.close() 
+            return config
+        except FileNotFoundError:
+            print("[-] Config file not found.")
 
+    # unsupported for now
     def get_domains(self, domains_file):
-        file = open(domain_file, 'r')
+        file = open(domains_file, 'r')
         lines = file.readlines()
         domains = [line.rstrip() for line in lines]
         return domains
@@ -85,19 +88,51 @@ class recon_sk():
 
     # actual module execution
     def run_module(self, name):
-        mod = self.framework._do_modules_load(name)
-        print("[+] Now running: "+name)
-        # input("Paused")
-        # if no module found return 
-        if not mod: return
-        mod.do_run(None)
-        for table in mod._summary_counts:
-            new_hosts = mod._summary_counts[table]['new']
-            if new_hosts > 0:
-                print("[+] New hosts found, run modules again.")
-                return True
-            else:
-                return False
+        try:
+            mod = self.framework._do_modules_load(name)
+            print("[+] Now running: "+name)
+            # input("Paused")
+            # if no module found return 
+            if not mod: return
+            mod.run()
+            for table in mod._summary_counts:
+                new_hosts = mod._summary_counts[table]['new']
+                if new_hosts > 0:
+                    print("[+] New hosts found, run modules again.")
+                    return True
+                else:
+                    return False
+        # source contains no input exception handling
+        # basically when gobal source fails, manually set it
+        except FrameworkException as e:
+            mod = self.framework._do_modules_load(name)
+            print("\n[+] Now running: " + name)
+            # if no module found return 
+            if not mod: return
+            # manually set source option
+            mod.onecmd("options set SOURCE "+ self.domains[0])
+            mod.run()
+            for table in mod._summary_counts:
+                new_hosts = mod._summary_counts[table]['new']
+                if new_hosts > 0:
+                    print("[+] New hosts found, run modules again.")
+                    return True
+                else:
+                    return False
+        except Exception:
+            print('Something broken? See https://github.com/lanmaster53/recon-ng/wiki/Troubleshooting#issue-reporting.')  
+        finally:
+            pass
+            # if mod._summary_counts:
+            #     mod.heading('Summary', level=0)
+            #     for table in mod._summary_counts:
+            #         new = mod._summary_counts[table]['new']
+            #         cnt = mod._summary_counts[table]['count']
+            #         if new > 0:
+            #             method = getattr(mod, 'alert')
+            #         else:
+            #             method = getattr(mod, 'output')
+            #         method(f"{cnt} total ({new} new) {table} found.")
 
     # need a better solution for reporting section
     def run_report_modules(self):
@@ -111,29 +146,25 @@ class recon_sk():
         mod.do_run(None)
 
 def help():
-    print("[-] Invalid arguments\n")
     print("[~]   Syntax: ./recon-sk config.json")
     print("[~] Optional: ./recon-sk config.json {number of iterations}")
     print("[~] View recon-sk_README for help")
 
 if __name__ == "__main__":
     arg = sys.argv
-    file = arg[1]
 
-    if len(arg) > 4:
-        help()
-        exit()
-
-    max_runs = 1
-    if len(arg) == 3:
+    try:
+        config_file = arg[1]
         max_runs = int(arg[2])
-    
-    domain_file = ""
-    if len(arg) == 4:
-        domain_file = str(arg[3])
+    except IndexError:
+        print("[-] Invalid arguments\n")
+        help()
+
+    # check for install modules flag
+       
 
     # run recon
-    session = recon_sk(file, domain_file)
+    session = recon_sk(config_file)
     session.add_api_keys()
     session.add_options()
     for i in range(max_runs):
@@ -143,5 +174,6 @@ if __name__ == "__main__":
 
     # notes:
     # recon/hosts-hosts/resolve -> source contains no input
+    # recon/hosts-hosts/bing_ip ->      "        "
     # recon/domains-hosts/findsubdomains -> module just doesnt exist anymore lol
     # recon/domains-vulnerabilities/xssposed ->  doesnt exists

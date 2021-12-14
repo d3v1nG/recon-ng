@@ -20,6 +20,7 @@ class recon_sk():
         self.config = self.get_config(filepath)
         self.workspace = self.config['workspace']
         self.domains = self.config['domains']
+        self.netblocks = self.config['netblocks']
         self.keys = self.config['keys']
         self.modules = self.config['modules']
         self.reporting = self.config['reporting']
@@ -68,6 +69,8 @@ class recon_sk():
     def add_options(self):
         for domain in self.domains:
             self.framework.insert_domains(domain)
+        for netblock in self.netblocks:
+            self.framework.insert_netblocks(netblock)
         self.framework.insert_companies(self.workspace)
 
 
